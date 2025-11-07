@@ -1,5 +1,4 @@
-﻿// İçerik: Models/LanguageResource.cs
-namespace MenuProject.API.Models
+﻿namespace MenuProject.API.Models
 {
     public class LanguageResource
     {

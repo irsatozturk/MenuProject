@@ -1,5 +1,4 @@
-﻿// İçerik: Models/CompanySetting.cs
-namespace MenuProject.API.Models
+﻿namespace MenuProject.API.Models
 {
     public class CompanySetting
     {
