@@ -1,6 +1,7 @@
 using MenuProject.API.Data;
 using Microsoft.EntityFrameworkCore;
 using MenuProject.API.Services;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +11,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<IMenuService, MenuService>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; // sonsuz döngüleri (Menu -> Category -> Menu...) görmezden gel
+    });
 
 builder.Services.AddSwaggerGen();  //builder.Services.AddOpenApi();
 
