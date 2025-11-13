@@ -14,7 +14,7 @@ builder.Services.AddScoped<IMenuService, MenuService>();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; // sonsuz donguleri (Menu -> Category -> Menu...) görmezden gelmesi icin eklendi
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; // sonsuz donguleri (Menu -> Category -> Menu...) gormezden gelmesi icin eklendi
     });
 
 builder.Services.AddSwaggerGen();
