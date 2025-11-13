@@ -1,4 +1,4 @@
-﻿using MenuProject.API.Models;
+﻿using MenuProject.Shared.Models;
 
 namespace MenuProject.API.Services
 {

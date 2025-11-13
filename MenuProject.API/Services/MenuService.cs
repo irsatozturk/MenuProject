@@ -1,5 +1,5 @@
 ﻿using MenuProject.API.Data;
-using MenuProject.API.Models;
+using MenuProject.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace MenuProject.API.Services

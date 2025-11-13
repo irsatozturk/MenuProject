@@ -1,4 +1,4 @@
-﻿namespace MenuProject.API.Models
+﻿namespace MenuProject.Shared.Models
 {
     public class Menu
     {
