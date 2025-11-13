@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36623.8 d17.14
+VisualStudioVersion = 17.14.36623.8
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MenuProject.API", "MenuProject.API\MenuProject.API.csproj", "{746941D1-7CAA-4EED-90D8-9459CE8B5AFB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MenuProject.Admin", "MenuProject.Admin\MenuProject.Admin.csproj", "{2F5CFFC1-B53C-4D90-ADAF-8BA8072E908C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MenuProject.Shared", "MenuProject.Shared\MenuProject.Shared.csproj", "{D7C6E2CB-4684-4EB8-A962-05B478EF7384}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{2F5CFFC1-B53C-4D90-ADAF-8BA8072E908C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2F5CFFC1-B53C-4D90-ADAF-8BA8072E908C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2F5CFFC1-B53C-4D90-ADAF-8BA8072E908C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7C6E2CB-4684-4EB8-A962-05B478EF7384}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7C6E2CB-4684-4EB8-A962-05B478EF7384}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7C6E2CB-4684-4EB8-A962-05B478EF7384}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7C6E2CB-4684-4EB8-A962-05B478EF7384}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
