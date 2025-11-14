@@ -9,5 +9,7 @@ namespace MenuProject.API.Services
         //Menu -> Döndürülecek veri türünü belirtir. Burada menu modeli döndürülecek
         //GetDefaultMenuAsync -> Metodun adını böyle koyduk, tüm tasklar asenkron olduğu için ismin sonuna "Async" ekledik
         //string languageCode -> Metodun parametresini belirtir, dil kodunu parametre olarak gönderiyoruz
+
+        Task<IEnumerable<Menu>> GetAllMenusAsync(string languageCode);
     }
 }

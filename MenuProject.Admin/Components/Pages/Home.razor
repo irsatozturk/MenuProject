@@ -1,8 +1,68 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+@* 1. HttpClient'ı (Program.cs'te yapılandırdığımız) enjekte ediyoruz *@
+@using System.Net.Http.Json
+@using MenuProject.Shared.Models  @* Modellerimizi (Menu, Product vb.) tanımak için *@
+@inject IHttpClientFactory HttpClientFactory
 
-<h1>Hello, world!</h1>
+<PageTitle>Ana Menü</PageTitle>
 
-Welcome to your new app.
-dssadasdasdsssssssssssssssss
+<h1>API'den Gelen Menü</h1>
+
+@if (menu == null && !loadFailed)
+{
+    <p><em>Menü yükleniyor... (API'ye bağlanılıyor...)</em></p>
+}
+else if (loadFailed)
+{
+    <p><em>Menü yüklenemedi. API'nin çalıştığından emin olun.</em></p>
+    <p>Hata: @errorMessage</p>
+}
+else
+{
+    <h2>@menu.Translations.FirstOrDefault()?.Name</h2>
+    <p>Durum: @(menu.IsActive ? "Aktif" : "Pasif")</p>
+
+    @foreach (var category in menu.Categories)
+    {
+        <h3>@category.Translations.FirstOrDefault()?.Name</h3>
+        <ul>
+            @foreach (var product in category.Products)
+            {
+                <li>
+                    <strong>@product.Translations.FirstOrDefault()?.Name</strong>
+                    (@product.Price ₺)
+                </li>
+            }
+        </ul>
+    }
+}
+
+@code {
+    // 2. Veriyi tutacağımız C# değişkeni
+    private Menu? menu;
+    private bool loadFailed = false;
+    private string? errorMessage = string.Empty;
+
+    // 3. Blazor'un "Sayfa Yüklendiğinde" çalışan özel metodu
+    protected override async Task OnInitializedAsync()
+    {
+        // 4. API ile konuşacak HttpClient'ı oluşturuyoruz
+        // (Program.cs'te "MenuAPI" adıyla kaydettiğimizi istiyoruz)
+        var httpClient = HttpClientFactory.CreateClient("MenuAPI");
+
+        try
+        {
+            // 5. API'mize GET isteği atıyoruz
+            // BaseAddress (https://localhost:7239) zaten Program.cs'te kayıtlı.
+            // Bu istek, Swagger'da "Execute" etmenin kodla yapılmış halidir.
+            menu = await httpClient.GetFromJsonAsync<Menu>("/api/Menu/Default?language=tr");
+        }
+        catch (Exception ex)
+        {
+            // API çalışmıyorsa (veya başka bir hata varsa)
+            loadFailed = true;
+            errorMessage = ex.Message;
+        }
+    }
+}

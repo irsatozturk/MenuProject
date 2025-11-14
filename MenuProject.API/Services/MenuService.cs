@@ -32,5 +32,15 @@ namespace MenuProject.API.Services
 
             return menu;
         }
+
+        public async Task<IEnumerable<Menu>> GetAllMenusAsync(string languageCode)
+        {
+            var menus = await _context.Menus
+                .AsNoTracking()
+                .Include(m => m.Translations.Where(t => t.LanguageCode == languageCode))
+                .ToListAsync();
+
+            return menus;
+        }
     }
 }
