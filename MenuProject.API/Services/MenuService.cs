@@ -39,7 +39,6 @@ namespace MenuProject.API.Services
                 .AsNoTracking()
                 .Include(m => m.Translations.Where(t => t.LanguageCode == languageCode))
                 .ToListAsync();
-
             return menus;
         }
     }

@@ -26,5 +26,19 @@ namespace MenuProject.API.Controllers
 
             return Ok(menu);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllMenus(string language = "tr")
+        {
+            var menus = await _menuService.GetAllMenusAsync(language);
+            return Ok(menus);
+        }
     }
 }
+
+/*
+###var menu = await _menuService.GetDefaultMenuAsync(language);###
+
+bu satır Controller'ın işi MenuService'e "havale ettiği" ve ondan gelen sonucu (await ile) beklediği an. 
+Controller, Servis'in ne yaptığını bilmez, sadece ondan GetAllMenusAsync işini yapmasını ister.
+ */

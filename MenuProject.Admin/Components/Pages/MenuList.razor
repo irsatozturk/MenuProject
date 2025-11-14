@@ -1,0 +1,57 @@
+﻿@page "/menulist"
+
+@using System.Net.Http.Json
+@using MenuProject.Shared.Models
+@inject IHttpClientFactory HttpClientFactory
+
+<PageTitle>Menü Yönetimi</PageTitle>
+<h1>Menü Yönetimi</h1>
+
+@if (menuList == null)
+{
+    <p><em>Menüler yükleniyor...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Menü Adı (TR)</th>
+                <th>Durum (Aktif/Pasif)</th>
+                <th>Varsayılan mı?</th>
+            </tr>
+        </thead>
+        <tbody>
+            @* 3. Soru: Liste nasıl döngüye alınır? *@
+            @foreach (var menu in [...SORU 3...])
+            {
+                <tr>
+                    <td>@menu.Translations.FirstOrDefault(t => t.LanguageCode == "tr")?.Name</td>
+                    <td>@(menu.IsActive ? "Aktif" : "Pasif")</td>
+                    <td>@(menu.IsDefault ? "Evet" : "Hayır")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    // 4. Soru: Gelen listeyi tutacak değişken nasıl tanımlanır?
+    private [...SORU 4...]? menuList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var httpClient = HttpClientFactory.CreateClient("MenuAPI");
+        
+        try
+        {
+            // API'yi çağırıyoruz. Swagger'da 'Execute' ettiğimiz adres.
+            menuList = await httpClient.GetFromJsonAsync<IEnumerable<Menu>>("/api/Menu?language=tr");
+        }
+        catch (Exception ex)
+        {
+            // Hata yönetimi (şimdilik basit)
+            Console.WriteLine(ex.Message);
+        }
+    }
+}
