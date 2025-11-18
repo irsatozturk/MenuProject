@@ -6,6 +6,7 @@ namespace MenuProject.API.Services
     {
         Task<Menu> GetDefaultMenuAsync(string languageCode);
         Task<IEnumerable<Menu>> GetAllMenusAsync(string languageCode);
+        Task CreateMenuAsync(Menu menu);
     }
 }
 

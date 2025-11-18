@@ -33,6 +33,13 @@ namespace MenuProject.API.Controllers
             var menus = await _menuService.GetAllMenusAsync(language);
             return Ok(menus);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateMenu([FromBody] Menu menu)
+        {
+            await _menuService.CreateMenuAsync(menu);
+            return Ok(menu);
+        }
     }
 }
 

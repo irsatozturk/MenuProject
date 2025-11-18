@@ -1,4 +1,4 @@
-﻿@page "/menulist"
+﻿@page "/menus"
 
 @using System.Net.Http.Json
 @using MenuProject.Shared.Models
@@ -6,6 +6,9 @@
 
 <PageTitle>Menü Yönetimi</PageTitle>
 <h1>Menü Yönetimi</h1>
+<div class="mb-3">
+    <a href="/menus/create" class="btn btn-primary">Yeni Menü Ekle</a>
+</div>
 
 @if (menuList == null)
 {
@@ -22,8 +25,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @* 3. Soru: Liste nasıl döngüye alınır? *@
-            @foreach (var menu in [...SORU 3...])
+            @foreach (var menu in menuList  )
             {
                 <tr>
                     <td>@menu.Translations.FirstOrDefault(t => t.LanguageCode == "tr")?.Name</td>
@@ -36,8 +38,7 @@ else
 }
 
 @code {
-    // 4. Soru: Gelen listeyi tutacak değişken nasıl tanımlanır?
-    private [...SORU 4...]? menuList;
+    private IEnumerable<Menu>? menuList;
 
     protected override async Task OnInitializedAsync()
     {
@@ -45,12 +46,10 @@ else
         
         try
         {
-            // API'yi çağırıyoruz. Swagger'da 'Execute' ettiğimiz adres.
             menuList = await httpClient.GetFromJsonAsync<IEnumerable<Menu>>("/api/Menu?language=tr");
         }
         catch (Exception ex)
         {
-            // Hata yönetimi (şimdilik basit)
             Console.WriteLine(ex.Message);
         }
     }
