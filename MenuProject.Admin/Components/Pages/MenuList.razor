@@ -1,0 +1,56 @@
+﻿@page "/menus"
+
+@using System.Net.Http.Json
+@using MenuProject.Shared.Models
+@inject IHttpClientFactory HttpClientFactory
+
+<PageTitle>Menü Yönetimi</PageTitle>
+<h1>Menü Yönetimi</h1>
+<div class="mb-3">
+    <a href="/menus/create" class="btn btn-primary">Yeni Menü Ekle</a>
+</div>
+
+@if (menuList == null)
+{
+    <p><em>Menüler yükleniyor...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Menü Adı (TR)</th>
+                <th>Durum (Aktif/Pasif)</th>
+                <th>Varsayılan mı?</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var menu in menuList  )
+            {
+                <tr>
+                    <td>@menu.Translations.FirstOrDefault(t => t.LanguageCode == "tr")?.Name</td>
+                    <td>@(menu.IsActive ? "Aktif" : "Pasif")</td>
+                    <td>@(menu.IsDefault ? "Evet" : "Hayır")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IEnumerable<Menu>? menuList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var httpClient = HttpClientFactory.CreateClient("MenuAPI");
+        
+        try
+        {
+            menuList = await httpClient.GetFromJsonAsync<IEnumerable<Menu>>("/api/Menu?language=tr");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+}
