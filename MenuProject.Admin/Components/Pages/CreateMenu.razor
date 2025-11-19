@@ -40,16 +40,43 @@
 
     private async Task HandleSubmit()
     {
-        Console.WriteLine("--- BUTONA BASILDI! İŞLEM BAŞLIYOR ---");
-        menu.Translations.Add(new MenuTranslation 
-        { 
-            LanguageCode = "tr", 
-            Name = menuName 
-        });
+        Console.WriteLine("--- İŞLEM BAŞLIYOR ---"); // Konsola iz bırakalım
 
-        var client = HttpClientFactory.CreateClient("MenuAPI");
+        try
+        {
+            // 1. Çeviriyi ekle
+            menu.Translations.Add(new MenuTranslation
+            {
+                LanguageCode = "tr",
+                Name = menuName
+            });
 
-        await client.PostAsJsonAsync("/api/Menu", menu);
-        NavManager.NavigateTo("/menus");
+            // 2. İstemciyi oluştur
+            var client = HttpClientFactory.CreateClient("MenuAPI");
+
+            // 3. API'ye gönder (Hata muhtemelen burada çıkacak)
+            Console.WriteLine("API'ye istek atılıyor...");
+            var response = await client.PostAsJsonAsync("/api/Menu", menu);
+
+            // 4. Başarılı mı kontrol et
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Başarıyla kaydedildi!");
+                NavManager.NavigateTo("/menus");
+            }
+            else
+            {
+                // API'den hata döndüyse nedenini yaz
+                Console.WriteLine($"API Hatası: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // İŞTE BURASI! Programın çökmesini engelleyip hatayı konsola yazacak.
+            Console.WriteLine("====================================");
+            Console.WriteLine("KRİTİK HATA OLUŞTU:");
+            Console.WriteLine(ex.Message); // Hatanın ne olduğunu söyleyecek
+            Console.WriteLine("====================================");
+        }
     }
 }
