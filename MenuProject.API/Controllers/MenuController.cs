@@ -1,5 +1,6 @@
 ﻿using MenuProject.API.Services;
 using Microsoft.AspNetCore.Mvc;
+using MenuProject.Shared.Models;
 
 namespace MenuProject.API.Controllers
 {
@@ -42,10 +43,3 @@ namespace MenuProject.API.Controllers
         }
     }
 }
-
-/*
-###var menu = await _menuService.GetDefaultMenuAsync(language);###
-
-bu satır Controller'ın işi MenuService'e "havale ettiği" ve ondan gelen sonucu (await ile) beklediği an. 
-Controller, Servis'in ne yaptığını bilmez, sadece ondan GetAllMenusAsync işini yapmasını ister.
- */

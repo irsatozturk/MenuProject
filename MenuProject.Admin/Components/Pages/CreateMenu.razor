@@ -1,0 +1,55 @@
+﻿@rendermode InteractiveServer
+
+@page "/menus/create"
+@using MenuProject.Shared.Models
+@using System.Net.Http.Json
+
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavManager
+
+<h3>Yeni Menü Ekle</h3>
+
+<EditForm Model="@menu" OnValidSubmit="HandleSubmit" FormName="CreateMenuForm">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <label>Menü Adı (Türkçe):</label>
+        <InputText @bind-Value="menuName" class="form-control" />
+    </div>
+
+    <div class="mb-3 form-check">
+        <label class="form-check-label">
+            <InputCheckbox @bind-Value="menu.IsActive" class="form-check-input" />
+            Aktif mi?
+        </label>
+    </div>
+
+    <div class="mb-3 form-check">
+        <label class="form-check-label">
+            <InputCheckbox @bind-Value="menu.IsDefault" class="form-check-input" />
+            Varsayılan Menü mü?
+        </label>
+    </div>
+
+    <button type="submit" class="btn btn-success">Kaydet</button>
+    <a href="/menus" class="btn btn-secondary">İptal</a>
+</EditForm>
+
+@code {
+    private Menu menu = new Menu();
+    private string menuName = "";
+
+    private async Task HandleSubmit()
+    {
+        Console.WriteLine("--- BUTONA BASILDI! İŞLEM BAŞLIYOR ---");
+        menu.Translations.Add(new MenuTranslation 
+        { 
+            LanguageCode = "tr", 
+            Name = menuName 
+        });
+
+        var client = HttpClientFactory.CreateClient("MenuAPI");
+
+        await client.PostAsJsonAsync("/api/Menu", menu);
+        NavManager.NavigateTo("/menus");
+    }
+}
