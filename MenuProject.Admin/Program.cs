@@ -1,15 +1,14 @@
-using MenuProject.Admin.Components;
+using MenuProject.Admin.Components; // Veya sizde 'Routes' olabilir
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents(); 
 
 builder.Services.AddHttpClient("MenuAPI", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7239");
 });
-
 
 var app = builder.Build();
 
@@ -20,11 +19,9 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-
+app.UseStaticFiles();
 app.UseAntiforgery();
 
-app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

@@ -3,9 +3,13 @@
     public class MenuTranslation
     {
         public int Id { get; set; }
-        public string LanguageCode { get; set; }
-        public string Name { get; set; }
+        public string LanguageCode { get; set; } = null!;
+        public string Name { get; set; } = null!;
+
         public int MenuId { get; set; }
-        public Menu Menu { get; set; }
+
+        // JsonIgnore ekliyoruz kısır döngüye girmesin.
+        [System.Text.Json.Serialization.JsonIgnore]
+        public Menu? Menu { get; set; }
     }
 }
