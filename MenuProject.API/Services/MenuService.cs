@@ -41,5 +41,11 @@ namespace MenuProject.API.Services
                 .ToListAsync();
             return menus;
         }
+
+        public async Task CreateMenuAsync(Menu menu)
+        {
+            _context.Menus.Add(menu);
+            await _context.SaveChangesAsync();
+        }
     }
 }
