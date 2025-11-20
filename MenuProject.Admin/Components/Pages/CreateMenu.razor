@@ -1,82 +1,137 @@
-﻿@rendermode InteractiveServer
-
-@page "/menus/create"
+﻿@page "/menus/create"
+@rendermode InteractiveServer
 @using MenuProject.Shared.Models
-@using System.Net.Http.Json
+@using MenuProject.Admin.Services
+@using MenuProject.Admin.Components.Layout @* MainLayout'a erişim için *@
 
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavManager
+@* 1. Çeviri Servisini Enjekte Et *@
+@inject ClientTranslationService Translate
 
-<h3>Yeni Menü Ekle</h3>
+@* 3. İSTEK: Başlıklar artık veritabanından geliyor *@
+<h3>@Translate.Get("menu_create_title")</h3>
 
-<EditForm Model="@menu" OnValidSubmit="HandleSubmit" FormName="CreateMenuForm">
-    <DataAnnotationsValidator />
-    <div class="mb-3">
-        <label>Menü Adı (Türkçe):</label>
-        <InputText @bind-Value="menuName" class="form-control" />
-    </div>
+@if (isLoading)
+{
+    <div class="alert alert-info">Yükleniyor...</div>
+}
+else
+{
+    <EditForm Model="@menu" OnValidSubmit="HandleSubmit" FormName="CreateMenuForm">
+        <DataAnnotationsValidator />
 
-    <div class="mb-3 form-check">
-        <label class="form-check-label">
-            <InputCheckbox @bind-Value="menu.IsActive" class="form-check-input" />
-            Aktif mi?
-        </label>
-    </div>
+        @* validation summary yerine artık Toast kullanacağız *@
 
-    <div class="mb-3 form-check">
-        <label class="form-check-label">
-            <InputCheckbox @bind-Value="menu.IsDefault" class="form-check-input" />
-            Varsayılan Menü mü?
-        </label>
-    </div>
+        <div class="card mb-3">
+            <div class="card-header">@Translate.Get("menu_name_label")</div>
+            <div class="card-body">
+                @foreach (var translation in menu.Translations)
+                {
+                    <div class="mb-3">
+                        <label class="form-label">
+                            @Translate.Get("menu_name_label") (@translation.LanguageCode.ToUpper())
+                            @if (translation.LanguageCode == defaultLang)
+                            {
+                                <span class="text-primary fw-bold ms-2">(*)</span>
+                            }
+                        </label>
 
-    <button type="submit" class="btn btn-success">Kaydet</button>
-    <a href="/menus" class="btn btn-secondary">İptal</a>
-</EditForm>
+                        <InputText @bind-Value="translation.Name" class="form-control" />
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="mb-3 form-check">
+            <label class="form-check-label">
+                <InputCheckbox @bind-Value="menu.IsActive" class="form-check-input" />
+                @Translate.Get("is_active")
+            </label>
+        </div>
+
+        <div class="mb-3 form-check">
+            <label class="form-check-label">
+                <InputCheckbox @bind-Value="menu.IsDefault" class="form-check-input" />
+                @Translate.Get("is_default")
+            </label>
+        </div>
+
+        <button type="submit" class="btn btn-success">@Translate.Get("save_btn")</button>
+        <a href="/menus" class="btn btn-secondary">@Translate.Get("cancel_btn")</a>
+    </EditForm>
+}
 
 @code {
     private Menu menu = new Menu();
-    private string menuName = "";
+    private bool isLoading = true;
+    private string defaultLang = "tr";
 
-    private async Task HandleSubmit()
+    protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("--- İŞLEM BAŞLIYOR ---"); // Konsola iz bırakalım
+        // 1. Önce Çevirileri Yükle (Bu çok hızlı olur)
+        await Translate.LoadTranslationsAsync("tr"); // Varsayılan dil TR olsun
 
+        var client = HttpClientFactory.CreateClient("MenuAPI");
         try
         {
-            // 1. Çeviriyi ekle
-            menu.Translations.Add(new MenuTranslation
-            {
-                LanguageCode = "tr",
-                Name = menuName
-            });
+            var settings = await client.GetFromJsonAsync<LanguageSettingsDto>("/api/Menu/Languages");
 
-            // 2. İstemciyi oluştur
-            var client = HttpClientFactory.CreateClient("MenuAPI");
-
-            // 3. API'ye gönder (Hata muhtemelen burada çıkacak)
-            Console.WriteLine("API'ye istek atılıyor...");
-            var response = await client.PostAsJsonAsync("/api/Menu", menu);
-
-            // 4. Başarılı mı kontrol et
-            if (response.IsSuccessStatusCode)
+            if (settings != null)
             {
-                Console.WriteLine("Başarıyla kaydedildi!");
-                NavManager.NavigateTo("/menus");
-            }
-            else
-            {
-                // API'den hata döndüyse nedenini yaz
-                Console.WriteLine($"API Hatası: {response.StatusCode}");
+                defaultLang = settings.DefaultLanguage;
+                foreach (var langCode in settings.SupportedLanguages)
+                {
+                    menu.Translations.Add(new MenuTranslation { LanguageCode = langCode, Name = "" });
+                }
             }
         }
         catch (Exception ex)
         {
-            // İŞTE BURASI! Programın çökmesini engelleyip hatayı konsola yazacak.
-            Console.WriteLine("====================================");
-            Console.WriteLine("KRİTİK HATA OLUŞTU:");
-            Console.WriteLine(ex.Message); // Hatanın ne olduğunu söyleyecek
-            Console.WriteLine("====================================");
+            // 2. İSTEK: Eski Console.WriteLine yerine Toast kullan
+            MainLayout.GlobalNotifier?.Show($"Sistem Hatası: {ex.Message}", true);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        // 1. Validasyon Kontrolü
+        var defaultTranslation = menu.Translations.FirstOrDefault(t => t.LanguageCode == defaultLang);
+        if (defaultTranslation == null || string.IsNullOrWhiteSpace(defaultTranslation.Name))
+        {
+            // 1. İSTEK: Popup (Toast) olarak hata göster
+            MainLayout.GlobalNotifier?.Show(Translate.Get("validation_error"), true);
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("MenuAPI");
+
+        try
+        {
+            var response = await client.PostAsJsonAsync("/api/Menu", menu);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // 1. İSTEK: Başarı mesajı (Yeşil)
+                MainLayout.GlobalNotifier?.Show(Translate.Get("save_success"), false);
+
+                // Biraz bekleyip yönlendir (Mesaj görünsün diye)
+                await Task.Delay(1000);
+                NavManager.NavigateTo("/menus");
+            }
+            else
+            {
+                // Hata Mesajı (Kırmızı)
+                MainLayout.GlobalNotifier?.Show($"{Translate.Get("api_error")} ({response.StatusCode})", true);
+            }
+        }
+        catch (Exception ex)
+        {
+            MainLayout.GlobalNotifier?.Show(ex.Message, true);
         }
     }
 }
