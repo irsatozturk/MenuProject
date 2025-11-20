@@ -1,0 +1,51 @@
+﻿@* Bu bileşen, uygulamanın herhangi bir yerinden tetiklenebilir *@
+@inject MenuProject.Admin.Services.ClientTranslationService Translate
+
+<div class="toast-container">
+    @foreach (var msg in messages)
+    {
+        <div class="custom-toast @(msg.IsError ? "toast-error" : "toast-success") @(msg.IsFading ? "toast-fading" : "")">
+            <strong>@(msg.IsError? Translate.Get("error_title") : Translate.Get("success_title"))</strong>
+            <br />
+            @msg.Text
+        </div>
+    }
+</div>
+
+@code {
+    // Bildirim Modeli
+    public class ToastMessage
+    {
+        public string Text { get; set; } = "";
+        public bool IsError { get; set; }
+        public bool IsFading { get; set; } // Animasyon için
+    }
+
+    private List<ToastMessage> messages = new();
+
+    // Dışarıdan çağrılacak metot
+    public void Show(string text, bool isError = false)
+    {
+        var msg = new ToastMessage { Text = text, IsError = isError };
+        messages.Add(msg);
+        StateHasChanged(); // Ekranı güncelle
+
+        // Arka planda sayaç başlat (Fire and Forget)
+        Task.Run(async () =>
+        {
+            // 1. İSTEK: 5 Saniye Bekle (4. saniyede animasyon başlasın)
+            await Task.Delay(4000);
+
+            // Animasyonu başlat (CSS class ekle)
+            msg.IsFading = true;
+            await InvokeAsync(StateHasChanged);
+
+            // Animasyonun bitmesi için 1 saniye daha bekle (Toplam 5 sn)
+            await Task.Delay(1000);
+
+            // Listeden tamamen sil
+            messages.Remove(msg);
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+}

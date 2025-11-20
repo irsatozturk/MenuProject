@@ -8,7 +8,12 @@ builder.Services.AddRazorComponents()
 builder.Services.AddHttpClient("MenuAPI", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7239");
+    
+
 });
+
+// Çeviri servisini Scoped (her kullanýcý için ayrý) olarak ekliyoruz
+builder.Services.AddScoped<MenuProject.Admin.Services.ClientTranslationService>();
 
 var app = builder.Build();
 
