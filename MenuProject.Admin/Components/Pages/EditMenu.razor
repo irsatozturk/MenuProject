@@ -1,6 +1,8 @@
-﻿@page "/menus/create"
+﻿@page "/menus/edit/{Id:int}"
 @rendermode InteractiveServer
+
 @using MenuProject.Shared.Models
+@using System.Net.Http.Json
 @using MenuProject.Admin.Services
 @using MenuProject.Admin.Components.Layout
 
@@ -10,25 +12,25 @@
 @* YENİ: Servisi ekledik *@
 @inject NotifierService Notifier
 
-<h3>@Translate.Get("menu_create_title")</h3>
+<h3>@Translate.Get("menu_edit_title")</h3>
 
 @if (isLoading)
 {
-    <div class="alert alert-info">Yükleniyor...</div>
+    <div class="alert alert-info">@Translate.Get("loading")</div>
 }
 else
 {
-    <EditForm Model="@menu" OnValidSubmit="HandleSubmit" FormName="CreateMenuForm">
+    <EditForm Model="@menu" OnValidSubmit="HandleSubmit" FormName="EditMenuForm">
         <DataAnnotationsValidator />
 
         <div class="card mb-3">
-            <div class="card-header">@Translate.Get("menu_name_label")</div>
+            <div class="card-header">@Translate.Get("menu_names_header")</div>
             <div class="card-body">
                 @foreach (var translation in menu.Translations)
                 {
                     <div class="mb-3">
                         <label class="form-label">
-                            @Translate.Get("menu_name_label") (@translation.LanguageCode.ToUpper())
+                            @translation.LanguageCode.ToUpper()
                             @if (translation.LanguageCode == defaultLang)
                             {
                                 <span class="text-primary fw-bold ms-2">(*)</span>
@@ -54,12 +56,14 @@ else
             </label>
         </div>
 
-        <button type="submit" class="btn btn-success">@Translate.Get("save_btn")</button>
+        <button type="submit" class="btn btn-warning">@Translate.Get("update_btn")</button>
         <a href="/menus" class="btn btn-secondary">@Translate.Get("cancel_btn")</a>
     </EditForm>
 }
 
 @code {
+    [Parameter] public int Id { get; set; }
+
     private Menu menu = new Menu();
     private bool isLoading = true;
     private string defaultLang = "tr";
@@ -72,18 +76,33 @@ else
         try
         {
             var settings = await client.GetFromJsonAsync<LanguageSettingsDto>("/api/Menu/Languages");
-            if (settings != null)
+            if (settings != null) defaultLang = settings.DefaultLanguage;
+
+            var existingMenu = await client.GetFromJsonAsync<Menu>($"/api/Menu/{Id}");
+
+            if (existingMenu != null)
             {
-                defaultLang = settings.DefaultLanguage;
-                foreach (var langCode in settings.SupportedLanguages)
+                menu = existingMenu;
+                if (settings != null)
                 {
-                    menu.Translations.Add(new MenuTranslation { LanguageCode = langCode, Name = "" });
+                    foreach (var lang in settings.SupportedLanguages)
+                    {
+                        if (!menu.Translations.Any(t => t.LanguageCode == lang))
+                        {
+                            menu.Translations.Add(new MenuTranslation { LanguageCode = lang, Name = "", MenuId = menu.Id });
+                        }
+                    }
                 }
+            }
+            else
+            {
+                // YENİ: Servis kullanımı
+                Notifier.Show(Translate.Get("menu_not_found"), true);
+                NavManager.NavigateTo("/menus");
             }
         }
         catch (Exception ex)
         {
-            // YENİ: Servis kullanımı
             Notifier.Show($"Sistem Hatası: {ex.Message}", true);
         }
         finally
@@ -94,29 +113,22 @@ else
 
     private async Task HandleSubmit()
     {
-        var defaultTranslation = menu.Translations.FirstOrDefault(t => t.LanguageCode == defaultLang);
-        if (defaultTranslation == null || string.IsNullOrWhiteSpace(defaultTranslation.Name))
-        {
-            // YENİ: Servis kullanımı
-            Notifier.Show(Translate.Get("validation_error"), true);
-            return;
-        }
-
         var client = HttpClientFactory.CreateClient("MenuAPI");
+
         try
         {
-            var response = await client.PostAsJsonAsync("/api/Menu", menu);
+            var response = await client.PutAsJsonAsync("/api/Menu", menu);
 
             if (response.IsSuccessStatusCode)
             {
                 // YENİ: Servis kullanımı
-                Notifier.Show(Translate.Get("save_success"), false);
+                Notifier.Show(Translate.Get("update_success"), false);
                 await Task.Delay(1000);
                 NavManager.NavigateTo("/menus");
             }
             else
             {
-                Notifier.Show($"{Translate.Get("api_error")} ({response.StatusCode})", true);
+                Notifier.Show($"{Translate.Get("update_error")} ({response.StatusCode})", true);
             }
         }
         catch (Exception ex)

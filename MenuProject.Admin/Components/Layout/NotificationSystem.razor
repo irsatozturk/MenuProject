@@ -1,5 +1,13 @@
-﻿@* Bu bileşen, uygulamanın herhangi bir yerinden tetiklenebilir *@
-@inject MenuProject.Admin.Services.ClientTranslationService Translate
+﻿@rendermode InteractiveServer
+@using MenuProject.Admin.Components.Layout
+@using MenuProject.Admin.Services
+
+@inject ClientTranslationService Translate
+@inject ToastService ToastService
+@* ^^^ ARTIK SERVİSİ KULLANIYORUZ ^^^ *@
+
+@implements IDisposable
+@* ^^^ Bileşen kapanırken aboneliği iptal etmek için ^^^ *@
 
 <div class="toast-container">
     @foreach (var msg in messages)
@@ -13,39 +21,48 @@
 </div>
 
 @code {
-    // Bildirim Modeli
     public class ToastMessage
     {
         public string Text { get; set; } = "";
         public bool IsError { get; set; }
-        public bool IsFading { get; set; } // Animasyon için
+        public bool IsFading { get; set; }
     }
 
     private List<ToastMessage> messages = new();
 
-    // Dışarıdan çağrılacak metot
-    public void Show(string text, bool isError = false)
+    protected override void OnInitialized()
     {
-        var msg = new ToastMessage { Text = text, IsError = isError };
-        messages.Add(msg);
-        StateHasChanged(); // Ekranı güncelle
+        // SERVİSE ABONE OLUYORUZ:
+        // "Biri ShowToast derse, benim Show metodumu çalıştır"
+        ToastService.OnShow += Show;
+    }
 
-        // Arka planda sayaç başlat (Fire and Forget)
-        Task.Run(async () =>
+    private void Show(string text, bool isError)
+    {
+        // Bu metot arka plandaki servisten tetiklendiği için
+        // arayüzü (UI) güncellemek için InvokeAsync kullanmalıyız.
+        InvokeAsync(() =>
         {
-            // 1. İSTEK: 5 Saniye Bekle (4. saniyede animasyon başlasın)
-            await Task.Delay(4000);
+            var msg = new ToastMessage { Text = text, IsError = isError };
+            messages.Add(msg);
+            StateHasChanged();
 
-            // Animasyonu başlat (CSS class ekle)
-            msg.IsFading = true;
-            await InvokeAsync(StateHasChanged);
+            Task.Run(async () =>
+            {
+                await Task.Delay(4000);
+                msg.IsFading = true;
+                await InvokeAsync(StateHasChanged);
 
-            // Animasyonun bitmesi için 1 saniye daha bekle (Toplam 5 sn)
-            await Task.Delay(1000);
-
-            // Listeden tamamen sil
-            messages.Remove(msg);
-            await InvokeAsync(StateHasChanged);
+                await Task.Delay(1000);
+                messages.Remove(msg);
+                await InvokeAsync(StateHasChanged);
+            });
         });
+    }
+
+    public void Dispose()
+    {
+        // Hafıza sızıntısını önlemek için aboneliği iptal et
+        ToastService.OnShow -= Show;
     }
 }

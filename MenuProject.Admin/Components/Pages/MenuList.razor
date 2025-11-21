@@ -3,29 +3,37 @@
 
 @using System.Net.Http.Json
 @using MenuProject.Shared.Models
+@using MenuProject.Admin.Services
+@using MenuProject.Admin.Components.Layout
+@using MenuProject.Admin.Components
+
 @inject IHttpClientFactory HttpClientFactory
 @inject IJSRuntime JSRuntime
+@inject ClientTranslationService Translate
+@* YENİ: Servisi Enjekte Ediyoruz *@
+@inject NotifierService Notifier
 
-<PageTitle>Menü Yönetimi</PageTitle>
-<h1>Menü Yönetimi</h1>
+<PageTitle>@Translate.Get("menu_create_title")</PageTitle>
+
+<h1>@Translate.Get("menu_create_title").Replace("Yeni ", "") Yönetimi</h1>
 
 <div class="mb-3">
-    <a href="/menus/create" class="btn btn-primary">Yeni Menü Ekle</a>
+    <a href="/menus/create" class="btn btn-primary">@Translate.Get("menu_create_title")</a>
 </div>
 
 @if (menuList == null)
 {
-    <p><em>Menüler yükleniyor...</em></p>
+    <p><em>@Translate.Get("loading")</em></p>
 }
 else
 {
     <table class="table">
         <thead>
             <tr>
-                <th>Menü Adı (TR)</th>
-                <th>Durum</th>
-                <th>Varsayılan</th>
-                <th>İşlemler</th>
+                <th>@Translate.Get("menu_name_label")</th>
+                <th>@Translate.Get("is_active")</th>
+                <th>@Translate.Get("is_default")</th>
+                <th>@Translate.Get("operations")</th>
             </tr>
         </thead>
         <tbody>
@@ -45,8 +53,10 @@ else
                     </td>
                     <td>@(menu.IsDefault ? "Evet" : "Hayır")</td>
                     <td>
-                        <button class="btn btn-sm btn-warning">Düzenle</button>
-                        <button class="btn btn-sm btn-danger ms-2" @onclick="() => DeleteMenu(menu.Id)">Sil</button>
+                        <a href="/menus/edit/@menu.Id" class="btn btn-sm btn-warning">@Translate.Get("edit_btn")</a>
+                        <button class="btn btn-sm btn-danger ms-2" @onclick="() => RequestDelete(menu.Id)">
+                            @Translate.Get("delete_btn")
+                        </button>
                     </td>
                 </tr>
             }
@@ -54,11 +64,19 @@ else
     </table>
 }
 
+<DeleteConfirmationModal @ref="deleteConfirmationModal"
+                         Title="@Translate.Get("delete_confirm_title")"
+                         Message="@Translate.Get("confirm_delete")"
+                         OnConfirmed="HandleDeleteConfirmed" />
+
 @code {
     private IEnumerable<Menu>? menuList;
+    private DeleteConfirmationModal deleteConfirmationModal = default!;
+    private int _menuIdToDelete;
 
     protected override async Task OnInitializedAsync()
     {
+        await Translate.LoadTranslationsAsync("tr");
         await LoadMenus();
     }
 
@@ -71,31 +89,38 @@ else
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Yükleme Hatası: {ex.Message}");
+            // MainLayout yerine Notifier kullanıyoruz
+            Notifier.Show($"Hata: {ex.Message}", true);
         }
     }
 
-    private async Task DeleteMenu(int id)
+    private void RequestDelete(int id)
     {
-        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Bu menüyü silmek istediğinize emin misiniz?");
+        _menuIdToDelete = id;
+        deleteConfirmationModal.Show();
+    }
 
-        if (!confirmed)
-        {
-            return;
-        }
-
+    private async Task HandleDeleteConfirmed()
+    {
         var httpClient = HttpClientFactory.CreateClient("MenuAPI");
         try
         {
-            await httpClient.DeleteAsync($"/api/Menu/{id}");
-            await LoadMenus();
+            var response = await httpClient.DeleteAsync($"/api/Menu/{_menuIdToDelete}");
 
-            // İŞLEM BAŞARILI MESAJI
-            await JSRuntime.InvokeVoidAsync("alert", "Menü başarıyla silindi!");
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadMenus();
+                // YENİ KULLANIM:
+                Notifier.Show(Translate.Get("delete_success"), false);
+            }
+            else
+            {
+                Notifier.Show(Translate.Get("delete_error"), true);
+            }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Silinemedi: {ex.Message}");
+            Notifier.Show(ex.Message, true);
         }
     }
 }

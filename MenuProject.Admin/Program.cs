@@ -14,6 +14,8 @@ builder.Services.AddHttpClient("MenuAPI", client =>
 
 // Çeviri servisini Scoped (her kullanýcý için ayrý) olarak ekliyoruz
 builder.Services.AddScoped<MenuProject.Admin.Services.ClientTranslationService>();
+builder.Services.AddScoped<MenuProject.Admin.Services.ToastService>();
+builder.Services.AddScoped<MenuProject.Admin.Services.NotifierService>();
 
 var app = builder.Build();
 
