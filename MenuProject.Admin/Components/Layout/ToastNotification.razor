@@ -1,0 +1,63 @@
+﻿@using MenuProject.Admin.Services
+@inject NotifierService Notifier
+@implements IDisposable
+
+@* 1. KRİTİK EKLEME: Bu bileşenin MainLayout statik olsa bile çalışmasını sağlar *@
+@rendermode InteractiveServer
+
+@if (ShowToast)
+{
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+        <div class="toast show align-items-center text-white @(IsError ? "bg-danger" : "bg-success") border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    @Message
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" @onclick="HideToast"></button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool ShowToast;
+    private string Message = "";
+    private bool IsError;
+
+    protected override void OnInitialized()
+    {
+        Notifier.OnShow += ShowToastMessage;
+    }
+
+    // Metot imzasını async void yaptık çünkü event handler
+    private async void ShowToastMessage(string message, bool isError)
+    {
+        // 2. KRİTİK EKLEME: Arayüz güncellemesini garantiye almak için InvokeAsync kullanıyoruz
+        await InvokeAsync(() =>
+        {
+            Message = message;
+            IsError = isError;
+            ShowToast = true;
+            StateHasChanged();
+        });
+
+        // Timer işlemi (3 saniye sonra kapanış)
+        await Task.Delay(3000);
+
+        await InvokeAsync(() =>
+        {
+            ShowToast = false;
+            StateHasChanged();
+        });
+    }
+
+    private void HideToast()
+    {
+        ShowToast = false;
+    }
+
+    public void Dispose()
+    {
+        Notifier.OnShow -= ShowToastMessage;
+    }
+}

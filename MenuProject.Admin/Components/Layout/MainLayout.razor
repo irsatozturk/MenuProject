@@ -1,4 +1,6 @@
 ﻿@inherits LayoutComponentBase
+@using MenuProject.Admin.Components.Layout
+@using MenuProject.Admin.Components @* ToastNotification ve Modal burada olmalı *@
 
 <div class="page">
     <div class="sidebar">
@@ -16,28 +18,4 @@
     </main>
 </div>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
-
-@* --- BURAYA EKLEYİN --- *@
-@* Bildirim sistemine bir referans (x:Name gibi) veriyoruz *@
-<NotificationSystem @ref="notifier" />
-
-@code {
-    // Bildirim sistemine ulaşmak için statik bir köprü kuruyoruz
-    // (Bu biraz 'hacky' ama öğrenme aşaması için en kolayıdır)
-    public static NotificationSystem? GlobalNotifier { get; private set; }
-
-    private NotificationSystem? notifier;
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-        {
-            GlobalNotifier = notifier;
-        }
-    }
-}
+<ToastNotification />
