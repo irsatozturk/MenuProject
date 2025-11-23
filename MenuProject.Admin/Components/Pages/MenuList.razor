@@ -54,9 +54,20 @@ else
                     <td>@(menu.IsDefault ? "Evet" : "Hayır")</td>
                     <td>
                         <a href="/menus/edit/@menu.Id" class="btn btn-sm btn-warning">@Translate.Get("edit_btn")</a>
-                        <button class="btn btn-sm btn-danger ms-2" @onclick="() => RequestDelete(menu.Id)">
-                            @Translate.Get("delete_btn")
-                        </button>
+
+                        @* Varsayılan menü ise Sil butonu devre dışı (disabled) ve gri olsun *@
+                        @if (menu.IsDefault)
+                        {
+                            <button class="btn btn-sm btn-secondary ms-2" disabled title="Varsayılan menü silinemez">
+                                @Translate.Get("delete_btn")
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-sm btn-danger ms-2" @onclick="() => RequestDelete(menu.Id)">
+                                @Translate.Get("delete_btn")
+                            </button>
+                        }
                     </td>
                 </tr>
             }

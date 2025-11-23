@@ -1,7 +1,8 @@
 ﻿using MenuProject.API.Services;
 using MenuProject.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
-using static System.Net.WebRequestMethods;
+using Microsoft.EntityFrameworkCore;
+using MenuProject.API.Data; // Context'in olduğu namespace (Burası sende farklı olabilir, kontrol et)
 
 namespace MenuProject.API.Controllers
 {
@@ -10,14 +11,14 @@ namespace MenuProject.API.Controllers
     public class MenuController : ControllerBase
     {
         private readonly IMenuService _menuService;
+        private readonly ApplicationDbContext _context;
 
-        public MenuController(IMenuService menuService)
+        public MenuController(IMenuService menuService, ApplicationDbContext context)
         {
             _menuService = menuService;
+            _context = context;
         }
 
-        // 1. Varsayılan Menüyü Getir (Home Sayfası İçin)
-        // GET: api/Menu/Default
         [HttpGet("Default")]
         public async Task<IActionResult> GetDefaultMenu(string language = "tr")
         {
@@ -26,8 +27,6 @@ namespace MenuProject.API.Controllers
             return Ok(menu);
         }
 
-        // 2. Tüm Menüleri Listele (Yönetim Paneli Listesi İçin) - EKSİK OLAN BU OLABİLİR
-        // GET: api/Menu
         [HttpGet]
         public async Task<IActionResult> GetAllMenus(string language = "tr")
         {
@@ -35,26 +34,37 @@ namespace MenuProject.API.Controllers
             return Ok(menus);
         }
 
-        // 3. Yeni Menü Yarat
-        // POST: api/Menu
         [HttpPost]
         public async Task<IActionResult> CreateMenu([FromBody] Menu menu)
         {
-            await _menuService.CreateMenuAsync(menu);
+            if (menu.IsDefault)
+            {
+                menu.IsActive = true;
+                var otherDefaults = await _context.Menus.Where(m => m.IsDefault).ToListAsync();
+                foreach (var item in otherDefaults) item.IsDefault = false;
+            }
+
+            _context.Menus.Add(menu);
+            await _context.SaveChangesAsync();
             return Ok(menu);
         }
 
-        // 4. Menü Sil
-        // DELETE: api/Menu/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMenu(int id)
         {
-            await _menuService.DeleteMenuAsync(id);
+            var menu = await _context.Menus.FindAsync(id);
+            if (menu == null) return NotFound("Menü bulunamadı.");
+
+            if (menu.IsDefault)
+            {
+                return BadRequest("Varsayılan (Default) menü silinemez! Önce başka bir menüyü varsayılan yapın.");
+            }
+
+            _context.Menus.Remove(menu);
+            await _context.SaveChangesAsync();
             return Ok();
         }
 
-        // 5. Dil Kaynaklarını Getir (Dinamik Form İçin)
-        // GET: api/Menu/Languages
         [HttpGet("Languages")]
         public async Task<IActionResult> GetLanguages()
         {
@@ -62,16 +72,14 @@ namespace MenuProject.API.Controllers
             return Ok(settings);
         }
 
-        // 6. Çevirileri Getir (Toast Bildirimleri İçin)
-        // GET: api/Menu/Resources
         [HttpGet("Resources")]
         public async Task<IActionResult> GetResources(string lang = "tr")
         {
+            // İsim düzeltmesi: Service'de muhtemelen GetResourceKeysAsync diye geçiyor
             var resources = await _menuService.GetResourceKeysAsync(lang);
             return Ok(resources);
         }
 
-        // 1. Tek bir menüyü getiren endpoint
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMenuById(int id)
         {
@@ -80,11 +88,18 @@ namespace MenuProject.API.Controllers
             return Ok(menu);
         }
 
-        // 2. Güncelleme işlemini yapan endpoint
         [HttpPut]
         public async Task<IActionResult> UpdateMenu([FromBody] Menu menu)
         {
-            await _menuService.UpdateMenuAsync(menu);
+            if (menu.IsDefault)
+            {
+                menu.IsActive = true;
+                var otherDefaults = await _context.Menus.Where(m => m.IsDefault && m.Id != menu.Id).ToListAsync();
+                foreach (var item in otherDefaults) item.IsDefault = false;
+            }
+
+            _context.Menus.Update(menu);
+            await _context.SaveChangesAsync();
             return Ok(menu);
         }
     }

@@ -9,7 +9,6 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavManager
 @inject ClientTranslationService Translate
-@* YENİ: Servisi ekledik *@
 @inject NotifierService Notifier
 
 <h3>@Translate.Get("menu_edit_title")</h3>
@@ -42,19 +41,26 @@ else
             </div>
         </div>
 
+        @* --- GÜNCELLENEN KISIM --- *@
         <div class="mb-3 form-check">
             <label class="form-check-label">
-                <InputCheckbox @bind-Value="menu.IsActive" class="form-check-input" />
+                <InputCheckbox @bind-Value="menu.IsActive"
+                               @bind-Value:after="OnActiveChanged"
+                               class="form-check-input"
+                               disabled="@menu.IsDefault" />
                 @Translate.Get("is_active")
             </label>
         </div>
 
         <div class="mb-3 form-check">
             <label class="form-check-label">
-                <InputCheckbox @bind-Value="menu.IsDefault" class="form-check-input" />
+                <InputCheckbox @bind-Value="menu.IsDefault"
+                               @bind-Value:after="OnDefaultChanged"
+                               class="form-check-input" />
                 @Translate.Get("is_default")
             </label>
         </div>
+        @* ------------------------- *@
 
         <button type="submit" class="btn btn-warning">@Translate.Get("update_btn")</button>
         <a href="/menus" class="btn btn-secondary">@Translate.Get("cancel_btn")</a>
@@ -71,7 +77,6 @@ else
     protected override async Task OnInitializedAsync()
     {
         await Translate.LoadTranslationsAsync("tr");
-
         var client = HttpClientFactory.CreateClient("MenuAPI");
         try
         {
@@ -96,7 +101,6 @@ else
             }
             else
             {
-                // YENİ: Servis kullanımı
                 Notifier.Show(Translate.Get("menu_not_found"), true);
                 NavManager.NavigateTo("/menus");
             }
@@ -114,14 +118,12 @@ else
     private async Task HandleSubmit()
     {
         var client = HttpClientFactory.CreateClient("MenuAPI");
-
         try
         {
             var response = await client.PutAsJsonAsync("/api/Menu", menu);
 
             if (response.IsSuccessStatusCode)
             {
-                // YENİ: Servis kullanımı
                 Notifier.Show(Translate.Get("update_success"), false);
                 await Task.Delay(1000);
                 NavManager.NavigateTo("/menus");
@@ -134,6 +136,23 @@ else
         catch (Exception ex)
         {
             Notifier.Show(ex.Message, true);
+        }
+    }
+
+    // --- PARAMETRESİZ METOTLAR ---
+    private void OnDefaultChanged()
+    {
+        if (menu.IsDefault)
+        {
+            menu.IsActive = true;
+        }
+    }
+
+    private void OnActiveChanged()
+    {
+        if (menu.IsDefault)
+        {
+            menu.IsActive = true;
         }
     }
 }
