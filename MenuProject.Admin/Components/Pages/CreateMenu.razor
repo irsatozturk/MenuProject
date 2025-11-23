@@ -7,7 +7,6 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavManager
 @inject ClientTranslationService Translate
-@* YENİ: Servisi ekledik *@
 @inject NotifierService Notifier
 
 <h3>@Translate.Get("menu_create_title")</h3>
@@ -40,19 +39,27 @@ else
             </div>
         </div>
 
+        @* --- DÜZELTİLEN KISIM: @bind-Value:after KULLANIMI --- *@
         <div class="mb-3 form-check">
             <label class="form-check-label">
-                <InputCheckbox @bind-Value="menu.IsActive" class="form-check-input" />
+                @* IsDefault true ise bu kutu disabled (pasif) olur *@
+                <InputCheckbox @bind-Value="menu.IsActive"
+                               @bind-Value:after="OnActiveChanged"
+                               class="form-check-input"
+                               disabled="@menu.IsDefault" />
                 @Translate.Get("is_active")
             </label>
         </div>
 
         <div class="mb-3 form-check">
             <label class="form-check-label">
-                <InputCheckbox @bind-Value="menu.IsDefault" class="form-check-input" />
+                <InputCheckbox @bind-Value="menu.IsDefault"
+                               @bind-Value:after="OnDefaultChanged"
+                               class="form-check-input" />
                 @Translate.Get("is_default")
             </label>
         </div>
+        @* ----------------------------------------------------- *@
 
         <button type="submit" class="btn btn-success">@Translate.Get("save_btn")</button>
         <a href="/menus" class="btn btn-secondary">@Translate.Get("cancel_btn")</a>
@@ -67,7 +74,6 @@ else
     protected override async Task OnInitializedAsync()
     {
         await Translate.LoadTranslationsAsync("tr");
-
         var client = HttpClientFactory.CreateClient("MenuAPI");
         try
         {
@@ -83,7 +89,6 @@ else
         }
         catch (Exception ex)
         {
-            // YENİ: Servis kullanımı
             Notifier.Show($"Sistem Hatası: {ex.Message}", true);
         }
         finally
@@ -97,7 +102,6 @@ else
         var defaultTranslation = menu.Translations.FirstOrDefault(t => t.LanguageCode == defaultLang);
         if (defaultTranslation == null || string.IsNullOrWhiteSpace(defaultTranslation.Name))
         {
-            // YENİ: Servis kullanımı
             Notifier.Show(Translate.Get("validation_error"), true);
             return;
         }
@@ -109,7 +113,6 @@ else
 
             if (response.IsSuccessStatusCode)
             {
-                // YENİ: Servis kullanımı
                 Notifier.Show(Translate.Get("save_success"), false);
                 await Task.Delay(1000);
                 NavManager.NavigateTo("/menus");
@@ -122,6 +125,26 @@ else
         catch (Exception ex)
         {
             Notifier.Show(ex.Message, true);
+        }
+    }
+
+    // --- YENİ METOTLAR (PARAMETRESİZ) ---
+    // ChangeEventArgs kullanmıyoruz, çünkü bind-Value veriyi zaten güncelledi.
+    // Biz sadece 'sonra' (after) ne olacağına bakıyoruz.
+
+    private void OnDefaultChanged()
+    {
+        if (menu.IsDefault)
+        {
+            menu.IsActive = true;
+        }
+    }
+
+    private void OnActiveChanged()
+    {
+        if (menu.IsDefault)
+        {
+            menu.IsActive = true;
         }
     }
 }
